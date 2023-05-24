@@ -1,18 +1,7 @@
 #!/usr/bin/env python3.11
 import pygame
-from models import Car
+from models import Car, Background, Track
 from util import load_image
-
-class Background(pygame.sprite.Sprite):
-  def __init__(self, filename, location, size):
-    super().__init__()
-    self.image = load_image(filename)
-    self.image = pygame.transform.scale(self.image, size)
-    self.rect = self.image.get_rect()
-    self.rect.left, self.rect.top = location
-  
-  def draw(self, window):
-    window.blit(self.image, self.rect)
 
 class Window:
   def __init__(self, caption, size):
@@ -25,6 +14,7 @@ class Window:
     self.screen = pygame.display.set_mode((self.size))
     self.clock = pygame.time.Clock()
 
+    self.track = Track('track_mask.png', [0, 0], size)
     self.car = Car(880, 300)
 
   def main_loop(self):
@@ -60,6 +50,7 @@ class Window:
 
   def _process_game_logic(self):
     self.car.update()
+    self.track.detectCar(self.car)
 
   def _draw(self):
     self.screen.fill((0, 0, 0))
