@@ -1,7 +1,7 @@
 #!/usr/bin/env python3.11
 import pygame
 from models import Car, Background, Track
-from util import load_image
+from util import load_image, limit
 
 class Window:
   def __init__(self, caption, size):
@@ -41,12 +41,12 @@ class Window:
     if pressed[pygame.K_DOWN]: self.car.speed -= 0.2
     if round(self.car.speed, 1) == 0.1: self.car.speed = 0
 
-    c = 5
-    a = c / (self.car.speed + 1)
+    a = 5 / (abs(self.car.speed) + 1)
     if self.car.speed == 0: a = 0
+    a = limit(a, 0, 3.5)
 
-    if pressed[pygame.K_LEFT]: self.car.angle += a
-    if pressed[pygame.K_RIGHT]: self.car.angle -= a
+    if pressed[pygame.K_LEFT] and round(self.car.speed, 2) > 0.55: self.car.angle += a
+    if pressed[pygame.K_RIGHT] and round(self.car.speed, 2) > 0.55: self.car.angle -= a
 
   def _process_game_logic(self):
     self.car.update()
@@ -54,7 +54,9 @@ class Window:
 
   def _draw(self):
     self.screen.fill((0, 0, 0))
-    self.background.draw(self.screen)
+    # self.background.draw(self.screen)
+    self.screen.blit(self.track.mask_image, (0, 0))
+    self.screen.blit(self.car.mask_image, self.car.mask_rect)
     self.car.draw(self.screen)
     pygame.display.flip()
     self.clock.tick(60)

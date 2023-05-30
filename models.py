@@ -33,6 +33,7 @@ class Car:
     
     self.mask = mask.from_surface(self.surface)
     self.mask_image = self.mask.to_surface()
+    self.mask_rect = self.mask_image.get_rect(center = self.rect.center)
 
     self.angle = 180
     self.speed = 0
@@ -44,11 +45,13 @@ class Car:
   def draw(self, window):
     self.rect.topleft = (int(self.x), int(self.y))
     rotated = rotate(self.surface, self.angle)
-    self.mask = mask.from_surface(rotated)
-    self.mask_image = self.mask.to_surface()
     surface_rect = self.surface.get_rect(topleft = self.rect.topleft)
     new_rect = rotated.get_rect(center = surface_rect.center)
     window.blit(rotated, new_rect.topleft)
+
+    self.mask = mask.from_surface(rotated)
+    self.mask_image = self.mask.to_surface()
+    self.mask_rect = self.mask_image.get_rect(center = surface_rect.center)
 
 class Track:
   def __init__(self, filename, location, size):
@@ -62,4 +65,4 @@ class Track:
 
   def detectCar(self, car: Car):
     if not self.mask.overlap(car.mask, (car.x, car.y)):
-      print('Off Track')
+      pass

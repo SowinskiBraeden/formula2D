@@ -15,3 +15,5 @@ def load_image(filename: str) -> Surface:
     raise Exception(f'Filepath not found: \'{path}\' cannot be found')
 
   return load(path)
+
+def limit(num, minimum=1, maximum=255): return max(min(num, maximum), minimum)
