@@ -54,9 +54,10 @@ class Window:
 
   def _draw(self):
     self.screen.fill((0, 0, 0))
-    # self.background.draw(self.screen)
-    self.screen.blit(self.track.mask_image, (0, 0))
-    self.screen.blit(self.car.mask_image, self.car.mask_rect)
+    self.background.draw(self.screen)
+    # ---- debug mask ----
+    # self.screen.blit(self.track.mask_image, (0, 0))
+    # self.screen.blit(self.car.mask_image, self.car.mask_rect)
     self.car.draw(self.screen)
     pygame.display.flip()
     self.clock.tick(60)
