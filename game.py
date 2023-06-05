@@ -2,9 +2,10 @@
 import pygame
 from models import Car, Background, Track
 from util import load_image, limit
+import time
 
 class Window:
-  def __init__(self, caption, size):
+  def __init__(self, caption, size) -> None:
     self.caption = caption
     self.size = size
     self.background = Background('track.jpg', [0, 0], size)
@@ -17,18 +18,30 @@ class Window:
     self.track = Track('track_mask.png', [0, 0], size)
     self.car = Car(880, 300)
 
-  def main_loop(self):
+    self.sectors = {i: Track(f'sector_{i}.png', [0,0], size) for i in range(1, 4)}
+    self.last_sector = 3
+    self.sector = 3
+
+    self.fastestLap = 0
+    self.startTime = None
+    self.sectorStart = None
+    self.sectorEnd = None
+    self.sector_times = {i: 0 for i in range(1, 4)}
+    self.lapTime = 0
+    self.lapTimeValid = True
+
+  def main_loop(self) -> None:
     self.running = True
     while self.running:
       self._handle_input()
       self._process_game_logic()
       self._draw()
 
-  def _init_pygame(self):
+  def _init_pygame(self) -> None:
     pygame.init()
     pygame.display.set_caption(self.caption)
 
-  def _handle_input(self):
+  def _handle_input(self) -> None:
     for event in pygame.event.get():
       if event.type == pygame.QUIT or (
         event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE
@@ -48,16 +61,54 @@ class Window:
     if pressed[pygame.K_LEFT] and round(self.car.speed, 2) > 0.55: self.car.angle += a
     if pressed[pygame.K_RIGHT] and round(self.car.speed, 2) > 0.55: self.car.angle -= a
 
-  def _process_game_logic(self):
-    self.car.update()
-    self.track.detectCar(self.car)
+  def _process_game_logic(self) -> None:
+    t = time.time()
+    # if self.startTime != None: print(round(t - self.startTime, 3))
 
-  def _draw(self):
+
+    self.car.update()
+    onTrack = self.track.detectCar(self.car)
+    if not onTrack:
+      self.lapTimeValid = False
+
+    prev_sector = self.sector
+    for i in range(1, 4): self.sector = i if self.sectors[i].detectCar(self.car) else self.sector
+    self.last_sector = prev_sector if prev_sector != self.sector else self.last_sector
+
+    if self.sector != prev_sector:
+      if (self.last_sector == 1 and self.sector == 3) or (self.last_sector == 2 and self.sector == 1): self.lapTimeValid = False
+      print('Now in sector ', self.sector, ' Last sector was', self.last_sector)
+
+    if self.sector == 1 and self.last_sector == 3 and self.startTime != None and prev_sector != self.sector:
+      self.sectorEnd = time.time()
+      self.lapTime = round(self.sectorEnd - self.startTime, 3)
+      self.startTime = self.sectorEnd
+      self.sector_times[self.last_sector] = round(self.sectorEnd - self.sectorStart, 3)
+      print(f"Sector {self.last_sector}: {self.sector_times[self.last_sector]}")
+      valid = "" if self.lapTimeValid else "( Invalid )"
+      self.lapTimeValid = True
+      print(f"Lap Time: {self.lapTime} {valid}")
+
+    if self.sector == 2 and self.last_sector == 1 and prev_sector != self.sector: 
+      self.sectorEnd = time.time()
+      self.sector_times[self.last_sector] = round(self.sectorEnd - self.sectorStart, 3)
+      self.sectorStart = self.sectorEnd
+      print(f"Sector {self.last_sector}: {self.sector_times[self.last_sector]}")
+    
+    if self.sector == 3 and self.last_sector == 2 and prev_sector != self.sector:
+      self.sectorEnd = time.time()
+      self.sector_times[self.last_sector] = round(self.sectorEnd - self.sectorStart, 3)
+      self.sectorStart = self.sectorEnd
+      print(f"Sector {self.last_sector}: {self.sector_times[self.last_sector]}")
+    
+    if self.sector == 1 and self.last_sector == 3 and self.startTime == None:
+      self.startTime = time.time()
+      self.sectorStart = self.startTime
+
+  def _draw(self) -> None:
     self.screen.fill((0, 0, 0))
     self.background.draw(self.screen)
-    # ---- debug mask ----
-    # self.screen.blit(self.track.mask_image, (0, 0))
-    # self.screen.blit(self.car.mask_image, self.car.mask_rect)
+    self.track.draw(self.screen)
     self.car.draw(self.screen)
     pygame.display.flip()
     self.clock.tick(60)
