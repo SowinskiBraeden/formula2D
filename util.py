@@ -1,7 +1,17 @@
 #!/usr/bin/env python3.11
 from pygame.image import load
 from pygame import Surface
+from dataclasses import dataclass
 import os
+
+@dataclass
+class Colors:
+  White:  tuple = (255, 255, 255)
+  Green:  tuple = (0, 255, 0)
+  Yellow: tuple = (230, 193, 32)
+  Black:  tuple = (0, 0, 0)
+
+colors = Colors()
 
 def load_image(filename: str) -> Surface:
   if '.' in filename and filename.split('.')[1] not in ['png', 'jpg', 'jpeg']:

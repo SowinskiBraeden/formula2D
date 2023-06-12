@@ -1,7 +1,7 @@
 #!/usr/bin/env python3.11
 import pygame
 from models import Car, Background, Track
-from util import load_image, limit
+from util import load_image, limit, colors
 import time
 
 class Window:
@@ -12,6 +12,7 @@ class Window:
     self.running = False
 
     self._init_pygame()
+    self.font = pygame.font.Font('freesansbold.ttf', 24)
     self.screen = pygame.display.set_mode((self.size))
     self.clock = pygame.time.Clock()
 
@@ -22,10 +23,12 @@ class Window:
     self.last_sector = 3
     self.sector = 3
 
+    self.lastLap = 0
     self.fastestLap = 0
     self.startTime = None
     self.sectorStart = None
     self.sectorEnd = None
+    self.last_sector_times = {i: 0 for i in range(1, 4)}
     self.sector_times = {i: 0 for i in range(1, 4)}
     self.lapTime = 0
     self.lapTimeValid = True
@@ -65,7 +68,6 @@ class Window:
     t = time.time()
     # if self.startTime != None: print(round(t - self.startTime, 3))
 
-
     self.car.update()
     onTrack = self.track.detectCar(self.car)
     if not onTrack:
@@ -82,7 +84,9 @@ class Window:
     if self.sector == 1 and self.last_sector == 3 and self.startTime != None and prev_sector != self.sector:
       self.sectorEnd = time.time()
       self.lapTime = round(self.sectorEnd - self.startTime, 3)
+      self.fastestLap = self.lapTime if (self.lapTime <= self.fastestLap or self.fastestLap == 0) and self.lapTimeValid else self.fastestLap
       self.startTime = self.sectorEnd
+      self.last_sector_times[self.last_sector] = self.sector_times[self.last_sector]
       self.sector_times[self.last_sector] = round(self.sectorEnd - self.sectorStart, 3)
       print(f"Sector {self.last_sector}: {self.sector_times[self.last_sector]}")
       valid = "" if self.lapTimeValid else "( Invalid )"
@@ -91,12 +95,14 @@ class Window:
 
     if self.sector == 2 and self.last_sector == 1 and prev_sector != self.sector: 
       self.sectorEnd = time.time()
+      self.last_sector_times[self.last_sector] = self.sector_times[self.last_sector]
       self.sector_times[self.last_sector] = round(self.sectorEnd - self.sectorStart, 3)
       self.sectorStart = self.sectorEnd
       print(f"Sector {self.last_sector}: {self.sector_times[self.last_sector]}")
     
     if self.sector == 3 and self.last_sector == 2 and prev_sector != self.sector:
       self.sectorEnd = time.time()
+      self.last_sector_times[self.last_sector] = self.sector_times[self.last_sector]
       self.sector_times[self.last_sector] = round(self.sectorEnd - self.sectorStart, 3)
       self.sectorStart = self.sectorEnd
       print(f"Sector {self.last_sector}: {self.sector_times[self.last_sector]}")
@@ -106,9 +112,21 @@ class Window:
       self.sectorStart = self.startTime
 
   def _draw(self) -> None:
-    self.screen.fill((0, 0, 0))
+    self.screen.fill(colors.Black)
     self.background.draw(self.screen)
     self.track.draw(self.screen)
     self.car.draw(self.screen)
+
+    text = self.font.render(f"Fastest Lap: {self.fastestLap:.3f}", True, colors.Green, colors.Black)
+    self.screen.blit(text, text.get_rect())
+    for i in range(1, len(self.sector_times) + 1):
+      faster = self.sector_times[i] <= self.last_sector_times[i]
+      color = colors.Green if faster else colors.Yellow
+      diff = f"{'-' if faster else '+'}{abs(self.last_sector_times[i]-self.sector_times[i]):.3f}"
+      text = self.font.render(f"Sector {i}: {self.sector_times[i]:.3f} | {diff}", True, color, colors.Black)
+      textRect = text.get_rect()
+      textRect.center = (textRect.center[0], textRect.center[1] + i * 24)
+      self.screen.blit(text, textRect)
+
     pygame.display.flip()
     self.clock.tick(60)
