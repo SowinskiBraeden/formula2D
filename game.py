@@ -28,7 +28,7 @@ class Window:
     self.startTime = None
     self.sectorStart = None
     self.sectorEnd = None
-    self.last_sector_times = {i: 0 for i in range(1, 4)}
+    self.fastest_sector_times = {i: 0 for i in range(1, 4)}
     self.sector_times = {i: 0 for i in range(1, 4)}
     self.lapTime = 0
     self.lapTimeValid = True
@@ -85,8 +85,8 @@ class Window:
       self.sectorEnd = time.time()
       self.lapTime = round(self.sectorEnd - self.startTime, 3)
       self.fastestLap = self.lapTime if (self.lapTime <= self.fastestLap or self.fastestLap == 0) and self.lapTimeValid else self.fastestLap
+      self.fastest_sector_times = {i: self.sector_times[i] for i in range(1, 4)} if (self.lapTime <= self.fastestLap or self.fastestLap == 0) and self.lapTimeValid else self.fastest_sector_times
       self.startTime = self.sectorEnd
-      self.last_sector_times[self.last_sector] = self.sector_times[self.last_sector]
       self.sector_times[self.last_sector] = round(self.sectorEnd - self.sectorStart, 3)
       print(f"Sector {self.last_sector}: {self.sector_times[self.last_sector]}")
       valid = "" if self.lapTimeValid else "( Invalid )"
@@ -95,14 +95,12 @@ class Window:
 
     if self.sector == 2 and self.last_sector == 1 and prev_sector != self.sector: 
       self.sectorEnd = time.time()
-      self.last_sector_times[self.last_sector] = self.sector_times[self.last_sector]
       self.sector_times[self.last_sector] = round(self.sectorEnd - self.sectorStart, 3)
       self.sectorStart = self.sectorEnd
       print(f"Sector {self.last_sector}: {self.sector_times[self.last_sector]}")
     
     if self.sector == 3 and self.last_sector == 2 and prev_sector != self.sector:
       self.sectorEnd = time.time()
-      self.last_sector_times[self.last_sector] = self.sector_times[self.last_sector]
       self.sector_times[self.last_sector] = round(self.sectorEnd - self.sectorStart, 3)
       self.sectorStart = self.sectorEnd
       print(f"Sector {self.last_sector}: {self.sector_times[self.last_sector]}")
@@ -120,9 +118,9 @@ class Window:
     text = self.font.render(f"Fastest Lap: {self.fastestLap:.3f}", True, colors.Green, colors.Black)
     self.screen.blit(text, text.get_rect())
     for i in range(1, len(self.sector_times) + 1):
-      faster = self.sector_times[i] <= self.last_sector_times[i]
+      faster = self.sector_times[i] <= self.fastest_sector_times[i]
       color = colors.Green if faster else colors.Yellow
-      diff = f"{'-' if faster else '+'}{abs(self.last_sector_times[i]-self.sector_times[i]):.3f}"
+      diff = f"{'-' if faster else '+'}{abs(self.fastest_sector_times[i]-self.sector_times[i]):.3f}"
       text = self.font.render(f"Sector {i}: {self.sector_times[i]:.3f} | {diff}", True, color, colors.Black)
       textRect = text.get_rect()
       textRect.center = (textRect.center[0], textRect.center[1] + i * 24)
