@@ -10,6 +10,9 @@ class Colors:
   Green:  tuple = (0, 255, 0)
   Yellow: tuple = (230, 193, 32)
   Black:  tuple = (0, 0, 0)
+  Gray:   tuple = (50, 50, 50)
+  Red:    tuple = (199, 54, 54)
+  Purple: tuple = (150, 15, 252)
 
 colors = Colors()
 
